@@ -25,14 +25,17 @@ class Test(unittest.TestCase):
             1 + 1 + 2 + 10 + 11 + 12 + 99)
 
     def test_two_children_second_child_has_child(self):
+        result = decode([2, 3, 0, 3, 10, 11, 12, 1, 1, 0, 1, 99, 2, 1, 1, 2])
+        print(result)
         self.assertTrue(
-            decode([2, 3, 0, 3, 10, 11, 12, 1, 1, 0, 1, 99, 2, 1, 1, 2]).meta_count()
+            result.meta_count()
             ==
             1 + 1 + 2 + 10 + 11 + 12 + 2 + 99)
 
     def test_something(self):
+        result = decode([2, 3, 1, 1, 0, 1, 99, 2, 0, 3, 10, 11, 12, 1, 1, 2])
         self.assertTrue(
-            decode([2, 3, 1, 1, 0, 1, 99, 2, 0, 3, 10, 11, 12, 1, 1, 2]).meta_count()
+            result.meta_count()
             ==
             1 + 1 + 2 + 10 + 11 + 12 + 2 + 99)
 
