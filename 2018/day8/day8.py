@@ -1,42 +1,27 @@
 class Node:
 
-    def __init__(self, code):
-        self.code = tuple(code)
-        self.children = {}
-
-    def add(self, child):
-        self.children[child.code] = child
-
-    def full_code(self):
-        children_len = sum([len(c.full_code()) for c in self.children.values()])
-        meta_len = self.code[1]
-        return self.code[: children_len + meta_len + 2]
-
-    def children_len(self):
-        return sum([len(c.full_code()) for c in self.children.values()])
-
-    def my_meta_count(self):
-        my_full_code = self.full_code()
-        return sum(my_full_code[2 + self.children_len(): 2 + self.children_len() + my_full_code[1]])
+    def __init__(self, code, children=[]):
+        self.code = code
+        self.children = children
 
     def meta_count(self):
-        return self.my_meta_count() + sum([c.meta_count() for c in self.children.values()])
+        return sum(self.code[2:]) + sum([c.meta_count() for c in self.children])
+
+    def len(self):
+        return len(self.code) + sum([c.len() for c in self.children])
 
     def __repr__(self):
-        return f'full_code={self.full_code()} children={list(self.children.values())}'
-
-    def __eq__(self, other):
-        return self.full_code() == other.full_code() and list(self.children.values()) == list(other.children.values())
+        return f'code={self.code} children={self.children}'
 
 
 def decode(list_of_numbers):
-    children_count = list_of_numbers[0]
-    if children_count == 0:
-        return Node(list_of_numbers)
-    me = Node(list_of_numbers)
-    for i in range(0, children_count):
-        me.add(decode(list_of_numbers[2 + me.children_len():]))
-    return me
+    children_count, metadata_count, *rest = list_of_numbers
+    children = []
+    for _ in range(0, children_count):
+        node = decode(rest)
+        children.append(node)
+        rest = rest[node.len():]
+    return Node([children_count, metadata_count] + rest[:metadata_count], children)
 
 
 if __name__ == '__main__':
@@ -44,5 +29,5 @@ if __name__ == '__main__':
         for line in f.read().splitlines():
             list_of_numbers = [int(n) for n in line.split(' ')]
             root = decode(list_of_numbers)
-            # print(root)
             print(root.meta_count())
+            # 49426
