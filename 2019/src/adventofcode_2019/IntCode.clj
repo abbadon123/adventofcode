@@ -27,8 +27,7 @@
 (defn ABCDE [code]
   (let [digits (map #(Character/digit % 10) (str code))
         digits-count (count digits)
-        zero-padding (repeat (- 5 digits-count) 0)
-        ]
+        zero-padding (repeat (- 5 digits-count) 0)]
     (concat zero-padding digits)))
 
 (defn parameter-1-mode [computer]
