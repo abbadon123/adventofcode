@@ -3,7 +3,7 @@
 
 (defn computer [memory input]
   {:memory              memory
-   :input               input
+   :input               (if (coll? input) input (vector input))
    :output              []
    :instruction-pointer 0
    :halt                false})
@@ -69,7 +69,8 @@
       (move-instruction-pointer 4))))
 
 (defn operation-multiply [computer]
-  (let [parameter-1 (parameter-1 computer)
+  (let [
+        parameter-1 (parameter-1 computer)
         parameter-2 (parameter-2 computer)
         result (* parameter-1 parameter-2)
         result-adr (address-value computer 3)]
@@ -78,12 +79,19 @@
       (update-memory result-adr result)
       (move-instruction-pointer 4))))
 
+(defn next-input [computer]
+  (first (:input computer)))
+
+(defn drop-next-input [computer]
+  (update computer :input rest))
+
 (defn operation-input [computer]
   (let [
-        input (:input computer)
+        input (next-input computer)
         result-adr (address-value computer 1)]
     (->
       computer
+      drop-next-input
       (update-memory result-adr input)
       (move-instruction-pointer 2))))
 
@@ -145,14 +153,22 @@
 (defn opcode [computer]
   (mod (instruction-code computer) 100))
 
+(defn debug [computer]
+  (assoc computer :indexed-memory (map-indexed vector (computer :memory))))
+
 (defn execute [computer]
   (let [opcode (opcode computer)
         instruction (opcode->instruction opcode)]
     (instruction computer)))
 
+(defn halt [computer]
+  (or
+    (:halt computer)
+    (not-empty (:output computer))))
+
 (defn run-computer [computer]
   (loop [computer computer]
-    (if (:halt computer)
+    (if (halt computer)
       computer
       (recur (execute computer)))))
 
