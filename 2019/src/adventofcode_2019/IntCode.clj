@@ -6,7 +6,11 @@
    :input               (if (coll? input) input (vector input))
    :output              []
    :instruction-pointer 0
+   :relative-base       0
    :halt                false})
+
+(defn debug [computer]
+  (assoc computer :indexed-memory (map-indexed vector (computer :memory))))
 
 (defn address-value [computer n]
   (let [memory (:memory computer)
@@ -21,7 +25,10 @@
   (let [address (address-value computer n)
         value (case mode
                 0 (-> computer (:memory) (get address))
-                1 address)]
+                1 address
+                2 (let [memory (:memory computer)
+                         relative-base (:relative-base computer)]
+                    (get memory (+ relative-base address))))]
     value))
 
 (defn ABCDE [code]
@@ -36,9 +43,14 @@
     C))
 
 (defn parameter-2-mode [computer]
-  (let [data (address-value computer 0)
+  (let [data (instruction-code computer)
         [_ B _ _ _] (ABCDE data)]
     B))
+
+(defn parameter-3-mode [computer]
+  (let [data (instruction-code computer)
+        [A _ _ _ _] (ABCDE data)]
+    A))
 
 (defn parameter-1 [computer]
   (parameter-n computer 1 (parameter-1-mode computer)))
@@ -58,11 +70,21 @@
 (defn set-instruction-pointer [computer ip]
   (assoc-in computer [:instruction-pointer] ip))
 
+(defn result-address [computer n]
+  (let [
+        mode (case n
+               1 (parameter-1-mode computer)
+               3 (parameter-3-mode computer))
+        address (address-value computer n)]
+    (if (= mode 2)
+      (+ address (:relative-base computer) )
+      address)))
+
 (defn operation-add [computer]
   (let [parameter-1 (parameter-1 computer)
         parameter-2 (parameter-2 computer)
         result (+ parameter-1 parameter-2)
-        result-adr (address-value computer 3)]
+        result-adr (result-address computer 3)]
     (->
       computer
       (update-memory result-adr result)
@@ -73,7 +95,7 @@
         parameter-1 (parameter-1 computer)
         parameter-2 (parameter-2 computer)
         result (* parameter-1 parameter-2)
-        result-adr (address-value computer 3)]
+        result-adr (result-address computer 3)]
     (->
       computer
       (update-memory result-adr result)
@@ -88,7 +110,7 @@
 (defn operation-input [computer]
   (let [
         input (next-input computer)
-        result-adr (address-value computer 1)]
+        result-adr (result-address computer 1)]
     (->
       computer
       drop-next-input
@@ -121,7 +143,7 @@
         parameter-2 (parameter-2 computer)
         equal (< parameter-1 parameter-2)
         result (if equal 1 0)
-        result-adr (address-value computer 3)]
+        result-adr (result-address computer 3)]
     (->
       computer
       (update-memory result-adr result)
@@ -132,11 +154,18 @@
         parameter-2 (parameter-2 computer)
         equal (= parameter-1 parameter-2)
         result (if equal 1 0)
-        result-adr (address-value computer 3)]
+        result-adr (result-address computer 3)]
     (->
       computer
       (update-memory result-adr result)
       (move-instruction-pointer 4))))
+
+(defn adjust-relative-base [computer]
+  (let [parameter-1 (parameter-1 computer)]
+    (->
+      computer
+      (update :relative-base + parameter-1)
+      (move-instruction-pointer 2))))
 
 (defn opcode->instruction [opcode]
   (case opcode
@@ -148,13 +177,12 @@
     6 operation-jump-if-false
     7 operation-less-than
     8 operation-equals
+    9 adjust-relative-base
     99 (fn [computer] (assoc computer :halt true))))
 
 (defn opcode [computer]
   (mod (instruction-code computer) 100))
 
-(defn debug [computer]
-  (assoc computer :indexed-memory (map-indexed vector (computer :memory))))
 
 (defn execute [computer]
   (let [opcode (opcode computer)
@@ -246,6 +274,11 @@
     (is (=
           (:output (run-computer (computer [3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1] NOT-ZERO)))
           [1]))
+
+
+    (is (=
+          (:output (run-computer (computer [109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99] [])))
+          [109]))
     ))
 
 (run-tests)
