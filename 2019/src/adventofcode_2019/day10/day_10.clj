@@ -115,13 +115,14 @@
         visible? (fn [from asteroids to]
                    (every? (partial visible from to) asteroids))
         angle-reflected (fn [[x1 y1] [x2 y2]]
-                          (angle [x1 (- y1)] [x2 (- y2)]))]
+                          (angle [x1 (- y1)] [x2 (- y2)]))
+        visible-asteroids (fn [asteroids] (filter (partial visible? point asteroids) asteroids))]
     (loop [asteroids (set asteroids)
            vaporized []]
       (if (<= (count asteroids) 0)
         vaporized
-        (recur (apply disj asteroids (filter (partial visible? point asteroids) asteroids))
-               (into vaporized (sort-by (partial angle-reflected point) (filter (partial visible? point asteroids) asteroids))))))))
+        (recur (apply disj asteroids (visible-asteroids asteroids))
+               (into vaporized (sort-by (partial angle-reflected point) (visible-asteroids asteroids))))))))
 
 (deftest day10-test
   (testing "part-2"
