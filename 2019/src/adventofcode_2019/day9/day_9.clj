@@ -3,9 +3,6 @@
             [clojure.test :refer :all]))
 
 
-(defn expand-memory [memory]
-  (vec (concat memory (take 200 (repeat 0)))))
-
 (defn run [program input]
   (loop [computer (computer (expand-memory program) input)]
     (if (:halt computer)

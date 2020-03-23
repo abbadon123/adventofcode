@@ -3,11 +3,6 @@
             [clojure.test :refer :all]
             [clojure.math.combinatorics :as combo]))
 
-
-
-(defn take-output [computer]
-  (first (:output computer)))
-
 (defn amplify [program [A B C D E] ]
   (let [
         phase-1 (run-computer (computer program [A 0]))
@@ -17,14 +12,6 @@
         phase-5 (run-computer (computer program [E (take-output phase-4)]))]
     (take-output phase-5)))
 
-
-(defn drop-output [computer]
-  (update computer :output subvec 1))
-
-(defn add-input [computer input]
-  (->
-    computer
-    (update :input concat input)))
 
 (defn amplify-2 [program [A B C D E] ]
   (loop [

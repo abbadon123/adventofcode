@@ -1,6 +1,10 @@
 (ns adventofcode-2019.IntCode
   (:require [clojure.test :refer :all]))
 
+(defn expand-memory
+  ([memory] (expand-memory memory 200))
+  ([memory size] (vec (concat memory (take size (repeat 0))))))
+
 (defn computer [memory input]
   {:memory              memory
    :input               (if (coll? input) input (vector input))
@@ -63,6 +67,17 @@
 
 (defn update-output [computer value]
   (update-in computer [:output] (fn [output] (conj output value))))
+
+(defn take-output [computer]
+  (first (:output computer)))
+
+(defn drop-output [computer]
+  (update computer :output rest))
+
+(defn add-input [computer input]
+  (->
+    computer
+    (update :input concat input)))
 
 (defn move-instruction-pointer [computer count]
   (update-in computer [:instruction-pointer] + count))
